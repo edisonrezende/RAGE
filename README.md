@@ -1,6 +1,6 @@
 # RAGE!
 
-Perfomance, cuidado e proteção para sua máquina.
+Performance, cuidado e proteção para sua máquina.
 
 ![Tela de Overclock do RAGE!](docs/overclock.png)
 
