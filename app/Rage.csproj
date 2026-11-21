@@ -26,6 +26,8 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <DebugType>embedded</DebugType>
+    <!-- Os símbolos embutidos guardam o caminho dos fontes; troca a pasta de quem compilou por "app" -->
+    <PathMap>$(MSBuildProjectDirectory)=app</PathMap>
     <NoWarn>$(NoWarn);CS1591;CA1416;NU1701;MSB3270</NoWarn>
     <WebView2LoaderPreference>Static</WebView2LoaderPreference>
   </PropertyGroup>
