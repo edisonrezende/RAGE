@@ -163,6 +163,8 @@ Scanner `startup` (Order 50): itens com `recommendation=desativar` e ativos (upd
 `proc.list` → `[{pid, name, title, path, publisher, cpu, mem, gpu, threads, priority, isSystem, icon?}]` (cpu % via delta de TotalProcessorTime entre
 chamadas, normalizado por núcleos; gpu % via PDH `\GPU Engine(*)\Utilization Percentage` instâncias `pid_X`; ícones em cache).
 `proc.kill {pid, tree?}`; `proc.priority {pid, priority:"idle"|"belowNormal"|"normal"|"aboveNormal"|"high"}`; `proc.reveal {pid}`.
+`proc.top {by:"mem"|"cpu"|"gpu", limit}` → `[{name, exe, pids:[], count, mem, cpu, gpu, self, icon?}]`: apps que mais usam o recurso, somando os
+processos de cada programa e sem os do sistema (usado pelo mini monitor; `self` marca o próprio RAGE!, que não pode ser finalizado).
 
 ### 3.3 Programas instalados — `apps.*`
 `apps.list` → `[{id, name, publisher, version, size, installDate, icon?, location, source:"win32"|"store", canUninstall}]` (Uninstall HKLM/HKCU/WOW6432,
@@ -242,12 +244,24 @@ verificação rápida.
 ## 4. Já implementado (núcleo)
 
 `app.info`, `app.elevate`, `app.open {target}`, `app.reveal {path}`, `app.regedit {key}`, `app.pickFolder {title}`, `app.pickFiles {title, multi, filter}`,
-`app.saveText {fileName, content, filter}`, `app.setTheme {theme}`, `app.hide`, `app.quit`, `app.notify`, `app.openDataFolder`, `app.installSensorDriver`,
+`app.saveText {fileName, content, filter}`, `app.setTheme {theme}`, `app.show`, `app.hide`, `app.quit`, `app.notify`, `app.openDataFolder`, `app.installSensorDriver`,
 `settings.get`, `settings.set {values}`, `activity.list {limit}`, `activity.clear`,
 `monitor.snapshot`, `monitor.history {seconds}`, `monitor.sensors`, `fps.status`, `overlay.toggle {show}`, `overlay.applySettings`,
+`overlay.setHotkey {hotkey}` (ex.: `"Ctrl+Shift+F10"`; nomes de tecla de `System.Windows.Forms.Keys`; erro se o Windows recusar a combinação, e o
+atalho anterior continua valendo), `overlay.captureHotkey {on}` (solta o atalho enquanto a tela de configurações grava uma combinação nova),
+`mini.state` → `{enabled, open, hideFullscreen}`, `mini.close`, `mini.setEnabled {on}`, `mini.resetPosition`,
 `boost.status`, `boost.start {mode}`, `boost.stop`, `boost.config`, `boost.setApps {apps}`, `boost.setServices {services, reset}`,
 `ram.clean {includeForeground}`, `ram.top`, `power.plans`, `power.setPlan {guid|"rage"}`, `power.setOverlay {mode}`, `power.setCpu {...}`,
 `games.list`, `games.scan`, `games.add {exe}`, `games.update {id, autoBoost, highPerfGpu, name, hidden}`, `games.remove {id}`, `games.launch {id, boost}`,
 `care.categories`, `care.scan`, `care.fix`, `care.last`.
 
-Eventos enviados pelo host: `telemetry` (Snapshot a cada 1 s), `activity`, `boost`, `game`, `overlay`, `app.shown`.
+Eventos enviados pelo host: `telemetry` (Snapshot a cada 1 s, só para as páginas que estão na tela), `activity`, `boost`, `game`, `overlay`,
+`mini {open}`, `app.shown`.
+
+### 4.1 Mini monitor (`app/Monitor/MiniMonitor.cs`)
+
+Pílula flutuante (janela em camadas desenhada em GDI+, não rouba o foco) com RAM e CPU; arrastar reposiciona e grava `miniMonitorPos`, um clique
+abre o painel. O painel é um segundo WebView2 no mesmo ambiente da janela principal, carregando a rota `#/mini` (`ui/src/pages/MiniPanel.jsx`),
+e é descartado 2 minutos depois de fechado. A ponte (`Bridge`) aceita várias páginas: respostas voltam para quem chamou, eventos vão para todas.
+Configurações: `miniMonitor` (liga/desliga), `miniMonitorHideFullscreen` (some em tela cheia sem bordas), `miniMonitorPos` (`"x,y"` em pixels).
+Para testes: `--mini-open` já abre com o painel, `--overlay-show` já abre com o overlay.

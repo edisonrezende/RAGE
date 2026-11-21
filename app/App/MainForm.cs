@@ -100,6 +100,9 @@ namespace Rage
             var overlay = new ToolStripMenuItem("Overlay de jogo");
             overlay.Click += (s, e) => Monitor.Overlay.Toggle();
             m.Items.Add(overlay);
+            var mini = new ToolStripMenuItem("Mini monitor");
+            mini.Click += (s, e) => Monitor.MiniMonitor.SetEnabled(!Settings.Current.MiniMonitor);
+            m.Items.Add(mini);
             m.Items.Add(new ToolStripSeparator());
             m.Items.Add("Sair", null, (s, e) => Quit());
             m.Opening += (s, e) =>
@@ -107,6 +110,7 @@ namespace Rage
                 var active = Boost.BoostService.Active;
                 turbo.Text = active ? "Desligar Modo Turbo" : "Ligar Modo Turbo";
                 overlay.Checked = Monitor.Overlay.Visible;
+                mini.Checked = Settings.Current.MiniMonitor;
             };
             turbo.Click += async (s, e) =>
             {
@@ -142,6 +146,10 @@ namespace Rage
             if (startHidden) BeginInvoke((Action)(() => { Hide(); WindowState = FormWindowState.Normal; ShowInTaskbar = true; Bridge.UiVisible = false; }));
         }
 
+        static readonly TaskCompletionSource<CoreWebView2Environment> envSource = new TaskCompletionSource<CoreWebView2Environment>();
+        /// <summary>Ambiente do WebView2 compartilhado com o painel do mini monitor (um navegador só para o app inteiro).</summary>
+        public static Task<CoreWebView2Environment> WebEnv => envSource.Task;
+
         async Task InitWebView()
         {
             try
@@ -149,9 +157,11 @@ namespace Rage
                 var opts = new CoreWebView2EnvironmentOptions("--disable-features=msSmartScreenProtection,msWebOOUI,msPdfOOUI --disable-background-timer-throttling");
                 var env = await CoreWebView2Environment.CreateAsync(null, Paths.WebView, opts);
                 await web.EnsureCoreWebView2Async(env);
+                envSource.TrySetResult(env);
             }
             catch (Exception ex)
             {
+                envSource.TrySetException(ex);
                 Log.Error("WebView2", ex);
                 var r = MessageBox.Show(this,
                     "O RAGE! precisa do Microsoft Edge WebView2 Runtime para exibir a interface.\n\nDeseja abrir a página de download agora?\n\nDetalhe: " + ex.Message,
@@ -162,6 +172,15 @@ namespace Rage
             }
 
             var core = web.CoreWebView2;
+            core.NavigationCompleted += (s, e) => { if (loading.Visible) { loading.Visible = false; loading.SendToBack(); } };
+            var pi = Array.IndexOf(Program.Args, "--page");
+            var page = pi >= 0 && pi + 1 < Program.Args.Length ? Program.Args[pi + 1] : null;
+            SetupView(this, core, page, null);
+        }
+
+        /// <summary>Prepara uma página do app num WebView2: opções, ponte com o host, interface embutida e a rota inicial.</summary>
+        public static void SetupView(Control owner, CoreWebView2 core, string route, Func<bool> visible)
+        {
             var dev = Environment.GetEnvironmentVariable("RAGE_DEV_URL");
             var debug = !string.IsNullOrEmpty(dev) || Program.Args.Contains("--devtools");
             core.Settings.AreDefaultContextMenusEnabled = debug;
@@ -173,10 +192,9 @@ namespace Rage
             core.Settings.IsSwipeNavigationEnabled = false;
             core.Settings.IsGeneralAutofillEnabled = false;
             core.Settings.IsPasswordAutosaveEnabled = false;
-            Bridge.Attach(this, core);
+            Bridge.Attach(owner, core, visible);
 
             core.NewWindowRequested += (s, e) => { e.Handled = true; TryOpenExternal(e.Uri); };
-            core.NavigationCompleted += (s, e) => { if (loading.Visible) { loading.Visible = false; loading.SendToBack(); } };
             core.NavigationStarting += (s, e) =>
             {
                 var u = e.Uri ?? "";
@@ -185,13 +203,12 @@ namespace Rage
                 TryOpenExternal(u);
             };
 
-            if (!string.IsNullOrEmpty(dev)) { core.Navigate(dev); return; }
-            LoadResources();
+            var hash = string.IsNullOrEmpty(route) ? "" : "#" + (route.StartsWith("/") ? route : "/" + route);
+            if (!string.IsNullOrEmpty(dev)) { core.Navigate(dev.TrimEnd('/') + "/" + hash); return; }
+            if (resources == null) LoadResources();
             core.AddWebResourceRequestedFilter("https://rage.app/*", CoreWebView2WebResourceContext.All);
             core.WebResourceRequested += (s, e) => Serve(core, e);
-            var pi = Array.IndexOf(Program.Args, "--page");
-            var page = pi >= 0 && pi + 1 < Program.Args.Length ? Program.Args[pi + 1] : null;
-            core.Navigate("https://rage.app/index.html" + (string.IsNullOrEmpty(page) ? "" : "#" + (page.StartsWith("/") ? page : "/" + page)));
+            core.Navigate("https://rage.app/index.html" + hash);
         }
 
         static void TryOpenExternal(string uri)
@@ -301,7 +318,6 @@ namespace Rage
         protected override void WndProc(ref Message m)
         {
             if (Program.ShowMessage != 0 && m.Msg == Program.ShowMessage) { ShowFromTray(); return; }
-            if (m.Msg == 0x0312) { Monitor.Overlay.OnHotkey(m.WParam.ToInt32()); return; } // WM_HOTKEY
             base.WndProc(ref m);
         }
     }

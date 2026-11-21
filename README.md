@@ -36,12 +36,16 @@ Temperatura, carga, clock e consumo de CPU e GPU, uso de RAM e VRAM, disco, rede
 
 A temperatura real do processador depende de um driver de sensores (PawnIO, gratuito e assinado). O app oferece a instalação em Configurações; sem ele, a temperatura da CPU aparece como indisponível.
 
+**Mini monitor:** uma pílula com RAM e CPU fica sempre à vista, mesmo com o RAGE! fechado na bandeja. Arraste para qualquer canto da tela; um clique abre o painel com anéis de RAM, CPU, GPU e disco, os apps que mais consomem (dá para finalizar por ali), limpeza de RAM e Modo Turbo. Ela some sozinha em tela cheia e pode ser desligada em Configurações, pelo ícone da bandeja ou com o botão direito na própria pílula.
+
+<img src="docs/mini-monitor.png" alt="Painel do mini monitor" width="348">
+
 ### Jogos
 
 - **Modo Turbo** com três perfis (Jogo, Trabalho, Economia): ativa um plano de energia próprio, pausa serviços que não fazem falta, fecha apps em segundo plano, libera RAM e dá prioridade ao jogo. Ao desligar, tudo volta como estava.
 - **Turbo automático:** liga sozinho quando você abre um jogo e desliga quando fecha.
 - **Biblioteca de jogos:** encontra jogos da Steam, Epic, Xbox, GOG, Ubisoft, Riot, EA e Battle.net, com opção de forçar a placa de vídeo dedicada por jogo.
-- **Contador de FPS e overlay** durante a partida (`Ctrl+Shift+F10`).
+- **Contador de FPS e overlay** durante a partida. O atalho padrão é `Ctrl+Shift+F10` e pode ser trocado em Configurações pressionando as teclas. O overlay aparece em jogos em janela ou em tela cheia sem bordas; em tela cheia exclusiva o Windows não deixa nenhuma janela ficar por cima do jogo.
 
 ### Desempenho
 
@@ -107,6 +111,7 @@ Abra http://localhost:5190. Outros atalhos de desenvolvimento:
 - Só o C#: `.\tools\build-app.ps1`
 - Testar uma função sem abrir a janela: `RAGE.exe --cli monitor.snapshot --out r.json` (`--cli list` mostra todas)
 - `--no-elevate` abre sem pedir administrador, `--tray` inicia minimizado, `--devtools` libera o F12
+- `--mini-open` já abre com o painel do mini monitor, `--overlay-show` já abre com o overlay na tela
 
 ## Como é feito
 
@@ -114,7 +119,7 @@ Abra http://localhost:5190. Outros atalhos de desenvolvimento:
 app\            host em C# (.NET Framework 4.8, WinForms + WebView2)
   Core\         ponte com a interface (RPC), configurações, log, registro, Verificação inteligente
   App\          janela, bandeja e funções gerais
-  Monitor\      sensores, FPS e overlay de jogo
+  Monitor\      sensores, FPS, overlay de jogo e mini monitor
   Boost\        Modo Turbo, RAM, energia, estágios de overclock e biblioteca de jogos
   Care\         lixo, privacidade, atalhos, registro, ajustes, internet, segurança, disco
   Tools\        inicialização, processos, programas, drivers, arquivos, reparos, benchmark, área de trabalho

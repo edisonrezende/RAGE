@@ -243,6 +243,39 @@ export const zoneColor = (baseFrac = 0, redFrac = 0.9) => (t) => {
   return `color-mix(in oklab, #ff5a1f ${k}%, #ffb347)`;
 };
 
+const DIAL_ON = zoneColor(0, 1.01);
+
+/**
+ * Botão redondo dentro de um anel de ticks (ligar, verificar).
+ * state: "idle" | "on" | "busy". tone "hot" pinta a face de âmbar mesmo parado, para a ação principal da tela.
+ */
+export function DialButton({ size = 176, n = 52, tickLen = 12, tickWidth = 3.2, icon, label, sub, state = "idle", tone = "dark", className, ...p }) {
+  const sweep = 270;
+  const ticks = useMemo(() => {
+    const c = size / 2, r1 = c - 2, r0 = r1 - tickLen, start = 90 + (360 - sweep) / 2;
+    return Array.from({ length: n }, (_, i) => {
+      const a = ((start + (i / (n - 1)) * sweep) * Math.PI) / 180;
+      return [c + r0 * Math.cos(a), c + r0 * Math.sin(a), c + r1 * Math.cos(a), c + r1 * Math.sin(a)];
+    });
+  }, [n, size, tickLen]);
+  const face = size - 2 * (tickLen + 10);
+  return (
+    <button type="button" className={cx("dial", className)} data-state={state} data-tone={tone} style={{ width: size, height: size }} {...p}>
+      <svg className="dial-ticks" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        {ticks.map(([x1, y1, x2, y2], i) => (
+          <line key={i} className="dial-tick" x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={tickWidth} strokeLinecap="round"
+            style={{ "--i": i, "--o": (i / (n - 1)).toFixed(3), "--c": DIAL_ON(i / (n - 1)) }} />
+        ))}
+      </svg>
+      <span className="dial-face" style={{ width: face, height: face }}>
+        <span className="material-symbols-outlined" style={{ fontSize: Math.round(face * 0.34) }} aria-hidden="true">{icon}</span>
+        {label && <span className="dial-label" style={{ fontSize: Math.max(11, Math.round(face * 0.088)) }}>{label}</span>}
+        {sub && <span className="dial-sub">{sub}</span>}
+      </span>
+    </button>
+  );
+}
+
 /** Mostrador de ticks em arco. value: 0..1; colorAt(t) dá a cor do tick na posição t (0..1). */
 export function TickRing({ value, n = 56, size = 196, sweep = 270, tickLen = 13, tickWidth = 3.2, colorAt, children, className }) {
   const lit = Math.round(Math.max(0, Math.min(1, value || 0)) * n);

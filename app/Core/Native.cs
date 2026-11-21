@@ -89,6 +89,36 @@ namespace Rage.Core
         [DllImport("user32.dll")] public static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
         [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr h, int id);
         public static readonly IntPtr HWND_BROADCAST = new IntPtr(0xffff);
+        [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+        [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int index);
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr h);
+        [DllImport("user32.dll")] static extern uint GetDpiForSystem();
+
+        /// <summary>Escala da tela onde a janela está (1.25 = 125%). O DeviceDpi do WinForms fica preso em 96 neste app.</summary>
+        public static float Scale(IntPtr hwnd)
+        {
+            try
+            {
+                uint dpi = hwnd != IntPtr.Zero ? GetDpiForWindow(hwnd) : 0;
+                if (dpi == 0) dpi = GetDpiForSystem();
+                return dpi >= 96 ? dpi / 96f : 1f;
+            }
+            catch { return 1f; }
+        }
+
+        /// <summary>Recoloca a janela no topo das "sempre visíveis" sem ativar nem mover (jogos em tela cheia sem bordas também são topmost).</summary>
+        public static void KeepOnTop(IntPtr h)
+        {
+            if (h != IntPtr.Zero) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, 0x1 | 0x2 | 0x10 | 0x200); // NOSIZE | NOMOVE | NOACTIVATE | NOOWNERZORDER
+        }
+
+        /// <summary>Tela cheia de verdade: cobre o monitor e não tem barra de título (jogo, vídeo, apresentação).</summary>
+        public static bool IsBorderlessFullscreen(IntPtr h)
+        {
+            if (!IsFullscreen(h)) return false;
+            return (GetWindowLong(h, -16) & 0x00C00000) != 0x00C00000; // GWL_STYLE, WS_CAPTION
+        }
 
         [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

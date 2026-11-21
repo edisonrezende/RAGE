@@ -305,11 +305,12 @@ function ActivityCard() {
   const { data, setData } = useRpc("activity.list", { limit: 30 });
   useEvent("activity", (a) => setData((d) => [a, ...(d || [])].slice(0, 30)));
   return (
-    <Panel className="col-span-12 lg:col-span-6 xl:col-span-4" title="Eventos recentes" icon="history" bodyClass="!pt-0">
-      {!data ? <Skeleton className="h-48" /> : data.length === 0 ? (
-        <p className="py-10 text-center text-[13px] text-[var(--text-tertiary)]">Nada por aqui ainda. Rode uma verificação ou ligue o Turbo.</p>
+    <Panel className="col-span-12 lg:col-span-6 xl:col-span-4" title="Eventos recentes" icon="history" bodyClass="relative min-h-[264px] !p-0">
+      {!data ? <Skeleton className="mx-4 h-48" /> : data.length === 0 ? (
+        <p className="px-4 py-10 text-center text-[13px] text-[var(--text-tertiary)]">Nada por aqui ainda. Rode uma verificação ou ligue o Turbo.</p>
       ) : (
-        <div className="scroll-area -mx-1 max-h-[244px] overflow-y-auto px-1">
+        // A lista ocupa o cartão inteiro: a altura vem da linha da grade (cartões vizinhos), não de um limite fixo.
+        <div className="scroll-area absolute inset-0 overflow-y-auto px-4 pb-2">
           {data.slice(0, 20).map((a) => (
             <div key={a.id} className="flex items-center gap-3 border-b border-[var(--border)] py-2.5 last:border-0">
               <span className={cx("flex size-8 shrink-0 items-center justify-center rounded-full", KIND_ICON_BG[a.kind] || "bg-[var(--bg-layer-2)] text-[var(--text-secondary)]")}><Icon name={a.icon || "bolt"} size={17} /></span>

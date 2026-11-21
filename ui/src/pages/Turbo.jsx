@@ -5,6 +5,7 @@ import { call } from "../lib/rage.js";
 import { useRpc, useTelemetry } from "../lib/store.js";
 import * as f from "../lib/format.js";
 import { Button, Checkbox, Chip, Icon, Panel, Skeleton, Toggle, cx, ErrorBox, InfoTip } from "../components/ui.jsx";
+import { DialButton } from "../components/Charts.jsx";
 
 const MODES = [
   { id: "game", icon: "sports_esports", title: "Jogo", desc: "Máximo desempenho: plano RAGE! Turbo, serviços pausados, RAM livre e o jogo em prioridade alta." },
@@ -75,15 +76,16 @@ function Hero({ config }) {
         </div>
 
         <div className="flex flex-col items-center justify-center gap-3 border-t border-[var(--border)] pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-          <button
+          <DialButton
+            size={184}
+            icon="power_settings_new"
+            label={busy ? (active ? "Desligando" : "Aplicando") : active ? "Ligado" : "Ligar"}
+            state={busy ? "busy" : active ? "on" : "idle"}
             onClick={toggle}
             disabled={busy}
-            className={cx("relative flex size-40 flex-col items-center justify-center rounded-full transition-all duration-300 disabled:opacity-70",
-              active ? "brand-bg text-white shadow-[0_0_0_10px_#ff5a1f1f,0_0_60px_-6px_#ff5a1f]" : "border-2 border-[var(--border-default)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:text-[var(--brand)]")}
-          >
-            {busy ? <span className="size-10 animate-spin-slow rounded-full border-[3px] border-current border-t-transparent" /> : <Icon name="power_settings_new" size={52} />}
-            <span className="mt-1 text-[12px] font-bold tracking-[0.12em]">{busy ? (active ? "DESLIGANDO" : "APLICANDO") : active ? "LIGADO" : "LIGAR"}</span>
-          </button>
+            aria-pressed={!!active}
+            title={active ? "Desligar o Modo Turbo" : "Ligar o Modo Turbo"}
+          />
           {active ? (
             <div className="text-center">
               <p className="text-[13px] font-semibold">{MODES.find((m) => m.id === boost.mode)?.title} · há {f.duration(elapsed)}</p>

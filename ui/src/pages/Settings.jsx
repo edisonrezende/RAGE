@@ -1,5 +1,6 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { HotkeyInput } from "../components/HotkeyInput.jsx";
 import { useApp } from "../App.jsx";
 import { call } from "../lib/rage.js";
 import { useAction, useTelemetry } from "../lib/store.js";
@@ -60,11 +61,14 @@ function SensorsPanel() {
 export default function SettingsPage() {
   const { settings: s, updateSettings: set, theme, setTheme, info, toast } = useApp();
   const { hash } = useLocation();
-  const [hotkey, setHotkey] = useState("");
-  useEffect(() => { setHotkey(s?.overlayHotkey || ""); }, [s?.overlayHotkey]);
   useEffect(() => { if (hash.includes("sensores")) setTimeout(() => document.getElementById("sensores")?.scrollIntoView({ behavior: "smooth", block: "center" }), 200); }, [hash]);
   if (!s) return null;
-  const saveHotkey = async () => { await set({ overlayHotkey: hotkey }); call("overlay.applySettings").catch(() => {}); toast("Atalho do overlay salvo", "success"); };
+  // O host só grava se o Windows aceitar a combinação; se recusar, o campo mostra o motivo e o atalho antigo continua valendo.
+  const saveHotkey = async (combo) => {
+    const r = await call("overlay.setHotkey", { hotkey: combo });
+    await set({ overlayHotkey: r.hotkey });
+    toast(`Atalho do overlay: ${r.hotkey.replaceAll("+", " + ")}`, "success");
+  };
 
   return (
     <div className="grid gap-4 xl:grid-cols-2">
@@ -103,10 +107,25 @@ export default function SettingsPage() {
           </Row>
           {s.autoRamClean && <Row title="Limite de uso"><Num value={s.autoRamThreshold} min={60} max={95} suffix="%" onChange={(v) => set({ autoRamThreshold: v })} /></Row>}
         </Panel>
+        <Panel title="Mini monitor" icon="monitor_heart" bodyClass="divide-y divide-[var(--border)] !pt-0">
+          <Row title="Mostrar o mini monitor" desc="Uma pílula com RAM e CPU sempre à vista. Arraste para onde quiser; um clique abre os detalhes.">
+            <Toggle checked={s.miniMonitor} onChange={(v) => set({ miniMonitor: v })} />
+          </Row>
+          {s.miniMonitor && <>
+            <Row title="Esconder em tela cheia" desc="Some sozinho em jogos, vídeos e apresentações e volta quando você sai.">
+              <Toggle checked={s.miniMonitorHideFullscreen} onChange={(v) => set({ miniMonitorHideFullscreen: v })} />
+            </Row>
+            <Row title="Posição" desc="Perdeu a pílula de vista? Ela volta para o topo da tela principal.">
+              <Button size="md" icon="vertical_align_top" onClick={() => call("mini.resetPosition").then(() => toast("Mini monitor de volta ao topo da tela", "success")).catch((e) => toast(e.message, "danger"))}>Recentralizar</Button>
+            </Row>
+          </>}
+        </Panel>
         <Panel title="Overlay de jogo" icon="picture_in_picture" bodyClass="divide-y divide-[var(--border)] !pt-0">
-          <Row title="Mostrar ao abrir um jogo"><Toggle checked={s.overlayEnabled && s.overlayAutoInGame} onChange={(v) => set({ overlayEnabled: v, overlayAutoInGame: v }).then(() => call("overlay.applySettings"))} /></Row>
-          <Row title="Atalho para mostrar/esconder" desc="Ex.: Ctrl+Shift+F10, Alt+F12">
-            <div className="flex gap-2"><input className="input mono w-40" value={hotkey} onChange={(e) => setHotkey(e.target.value)} /><Button size="md" onClick={saveHotkey} disabled={hotkey === s.overlayHotkey}>Salvar</Button></div>
+          <Row title="Mostrar ao abrir um jogo" desc="Funciona em janela e em tela cheia sem bordas. Em tela cheia exclusiva o Windows não deixa nenhuma janela ficar por cima do jogo.">
+            <Toggle checked={s.overlayEnabled && s.overlayAutoInGame} onChange={(v) => set({ overlayEnabled: v, overlayAutoInGame: v }).then(() => call("overlay.applySettings"))} />
+          </Row>
+          <Row title="Atalho para mostrar/esconder" desc="Clique no campo e pressione a combinação que quer usar.">
+            <HotkeyInput value={s.overlayHotkey || "Ctrl+Shift+F10"} onSave={saveHotkey} />
           </Row>
         </Panel>
         <Panel title="Sobre" icon="info">

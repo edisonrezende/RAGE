@@ -3,6 +3,7 @@ import { useApp } from "../App.jsx";
 import { useRpc } from "../lib/store.js";
 import { ScanFlow } from "../components/ScanFlow.jsx";
 import { Icon, Skeleton, Toggle, cx, Button } from "../components/ui.jsx";
+import { DialButton } from "../components/Charts.jsx";
 
 export default function SmartScan() {
   const { data: cats } = useRpc("care.categories");
@@ -30,12 +31,8 @@ export default function SmartScan() {
       idle={(scan) => (
         <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
           <section className="panel relative flex flex-col items-center justify-center overflow-hidden px-6 py-12 text-center">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(420px_circle_at_50%_35%,#ff5a1f22,transparent_65%)]" />
-            <button onClick={scan} disabled={!picked.size} className="group relative flex size-52 flex-col items-center justify-center rounded-full brand-bg text-white shadow-[0_0_0_12px_#ff5a1f14,0_0_0_26px_#ff5a1f0a,0_20px_60px_-10px_#ff5a1f] transition-transform hover:scale-[1.03] active:scale-[0.99] disabled:opacity-50">
-              <Icon name="health_and_safety" size={56} />
-              <span className="heading mt-2 text-[20px] font-bold tracking-wide">VERIFICAR</span>
-              <span className="text-[12px] opacity-85">{picked.size} {picked.size === 1 ? "categoria" : "categorias"}</span>
-            </button>
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(420px_circle_at_50%_35%,#ff8a3a1c,transparent_65%)]" />
+            <DialButton size={224} n={60} tickLen={13} tone="hot" icon="health_and_safety" label="Verificar" sub={`${picked.size} ${picked.size === 1 ? "categoria" : "categorias"}`} onClick={scan} disabled={!picked.size} className="relative" />
             <h2 className="heading mt-8 text-[22px] font-semibold">Um clique para limpar e acelerar o PC</h2>
             <p className="mt-1.5 max-w-lg text-[13px] text-[var(--text-secondary)]">Encontra lixo, rastros, entradas inválidas, ajustes de desempenho e brechas de segurança. Nada é alterado sem você revisar antes.</p>
             <label className="mt-5 flex items-center gap-2.5 text-[13px]">

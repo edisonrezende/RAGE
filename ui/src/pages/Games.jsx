@@ -5,6 +5,7 @@ import { useEvent, useRpc, useTelemetry } from "../lib/store.js";
 import * as f from "../lib/format.js";
 import { Button, Chip, Empty, ErrorBox, Icon, IconButton, Menu, Panel, Skeleton, Tabs, Toggle, cx } from "../components/ui.jsx";
 import { PageIntro } from "../components/Shell.jsx";
+import { Keys } from "../components/HotkeyInput.jsx";
 
 const SOURCES = { steam: "Steam", epic: "Epic Games", xbox: "Xbox", gog: "GOG", ubisoft: "Ubisoft", ea: "EA", riot: "Riot", battlenet: "Battle.net", manual: "Adicionado", auto: "Detectado" };
 const SOURCE_COLOR = { steam: "#66c0f4", epic: "#e5e5e5", xbox: "#52b043", gog: "#b366ff", ubisoft: "#3d8bff", ea: "#ff4747", riot: "#ff4655", battlenet: "#148eff", manual: "#ff6a2b", auto: "#ff6a2b" };
@@ -97,11 +98,11 @@ function FpsPanel() {
             <Toggle checked={settings?.fpsCounter} onChange={(v) => set({ fpsCounter: v })} />
           </label>
           <label className="flex items-center justify-between gap-3 py-2.5">
-            <div><p className="font-semibold">Overlay ao jogar</p><p className="text-[12px] text-[var(--text-tertiary)]">FPS, CPU, GPU e RAM por cima do jogo (modo janela ou sem bordas).</p></div>
+            <div><p className="font-semibold">Overlay ao jogar</p><p className="text-[12px] text-[var(--text-tertiary)]">FPS, CPU, GPU e RAM por cima do jogo, em janela ou tela cheia sem bordas.</p></div>
             <Toggle checked={settings?.overlayEnabled} onChange={(v) => set({ overlayEnabled: v, overlayAutoInGame: v ? true : settings?.overlayAutoInGame })} />
           </label>
           <div className="flex items-center justify-between gap-3 py-2.5">
-            <div><p className="font-semibold">Posição e atalho</p><p className="text-[12px] text-[var(--text-tertiary)]">Mostre/esconda a qualquer momento com <kbd className="mono rounded border border-[var(--border)] px-1 text-[11px]">{settings?.overlayHotkey || "Ctrl+Shift+F10"}</kbd></p></div>
+            <div><p className="font-semibold">Posição e atalho</p><p className="text-[12px] text-[var(--text-tertiary)]">Mostre/esconda a qualquer momento com <Keys combo={settings?.overlayHotkey || "Ctrl+Shift+F10"} className="align-middle" /> (troque em Configurações).</p></div>
             <div className="flex items-center gap-2">
               <Tabs value={settings?.overlayPosition || "top-left"} onChange={(v) => set({ overlayPosition: v })} items={[{ value: "top-left", label: "↖" }, { value: "top-right", label: "↗" }, { value: "bottom-left", label: "↙" }, { value: "bottom-right", label: "↘" }]} />
               <Button size="sm" onClick={show} icon={overlayOn ? "visibility_off" : "visibility"}>{overlayOn ? "Esconder" : "Testar"}</Button>

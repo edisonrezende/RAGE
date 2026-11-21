@@ -309,6 +309,38 @@ namespace Rage.Tools
         [Rpc("proc.list")]
         public static object ListRpc(bool icons = true) => List(icons);
 
+        /// <summary>Os apps que mais usam memória, CPU ou GPU, somando os processos de cada programa (mini monitor).</summary>
+        [Rpc("proc.top")]
+        public static object Top(string by = "mem", int limit = 8)
+        {
+            var me = Process.GetCurrentProcess().Id;
+            var groups = List(false).Cast<dynamic>()
+                .Where(p => !(bool)p.isSystem)
+                .GroupBy(p => (string)(p.path ?? p.name), StringComparer.OrdinalIgnoreCase)
+                .Select(g =>
+                {
+                    string path = g.First().path, exe = g.First().name;
+                    var pids = g.Select(p => (int)p.pid).ToList();
+                    return new
+                    {
+                        name = ToolsUtil.Description(path) ?? Path.GetFileNameWithoutExtension(exe),
+                        exe,
+                        path,
+                        pids,
+                        count = pids.Count,
+                        mem = g.Sum(p => (double)p.mem),
+                        cpu = Math.Round(Math.Min(100, g.Sum(p => (double)p.cpu)), 1),
+                        gpu = g.Max(p => (double)p.gpu),
+                        self = pids.Contains(me),
+                    };
+                });
+            groups = by == "cpu" ? groups.OrderByDescending(x => x.cpu).ThenByDescending(x => x.mem)
+                : by == "gpu" ? groups.OrderByDescending(x => x.gpu).ThenByDescending(x => x.mem)
+                : groups.OrderByDescending(x => x.mem);
+            return groups.Take(Math.Max(1, Math.Min(30, limit))).ToList()
+                .Select(x => new { x.name, x.exe, x.pids, x.count, x.mem, x.cpu, x.gpu, x.self, icon = ToolsUtil.IconData(x.path) }).ToList();
+        }
+
         [Rpc("proc.kill")]
         public static object KillRpc(int pid, bool tree = false) => Kill(pid, tree);
 

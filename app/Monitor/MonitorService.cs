@@ -371,8 +371,9 @@ namespace Rage.Monitor
                 history["diskActive"].Push(disks.FirstOrDefault(d => d.System)?.Active);
             }
 
-            if (Bridge.UiVisible) Bridge.Emit("telemetry", snap);
+            if (Bridge.AnyVisible) Bridge.EmitVisible("telemetry", snap);
             Overlay.Update(snap);
+            MiniMonitor.Update(snap);
             Alerts(snap, g, now);
         }
 

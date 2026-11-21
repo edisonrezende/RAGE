@@ -56,6 +56,12 @@ const activity = [
   { id: "a2", at: new Date(Date.now() - 36e5).toISOString(), icon: "speed", title: "Benchmark concluído", detail: "RAGE! Bench · CPU multi", value: "3.849 pts", kind: "bench" },
   { id: "a3", at: new Date(Date.now() - 72e5).toISOString(), icon: "auto_fix_high", title: "38 itens corrigidos", detail: "Arquivos inúteis, Registro", value: "2,4 GB", kind: "clean" },
   { id: "a4", at: new Date(Date.now() - 864e5).toISOString(), icon: "memory", title: "Memória RAM liberada", detail: "42 processos otimizados", value: "820 MB", kind: "clean" },
+  { id: "a5", at: new Date(Date.now() - 2 * 864e5).toISOString(), icon: "power_settings_new", title: "Modo Turbo desligado", detail: "Duração: 14min · restaurado: plano de energia", kind: "boost" },
+  { id: "a6", at: new Date(Date.now() - 2.1 * 864e5).toISOString(), icon: "rocket_launch", title: "Modo Turbo: Trabalho ativado", detail: "manual", value: "+2,3 GB", kind: "boost" },
+  { id: "a7", at: new Date(Date.now() - 3 * 864e5).toISOString(), icon: "sports_esports", title: "Jogo encerrado: cs2", detail: "Sessão de 1h 12min", kind: "info" },
+  { id: "a8", at: new Date(Date.now() - 3.1 * 864e5).toISOString(), icon: "sports_esports", title: "Jogo iniciado: cs2", kind: "info" },
+  { id: "a9", at: new Date(Date.now() - 4 * 864e5).toISOString(), icon: "device_thermostat", title: "Alerta de temperatura da CPU", detail: "96 °C", kind: "warn" },
+  { id: "a10", at: new Date(Date.now() - 5 * 864e5).toISOString(), icon: "memory", title: "Limpeza automática de RAM", detail: "RAM acima de 85%", value: "640 MB", kind: "clean" },
 ];
 
 let settings = {
@@ -64,7 +70,19 @@ let settings = {
   boostStopServices: true, boostCloseApps: true, boostNotify: true, boostServices: null, boostApps: ["OneDrive", "Teams"],
   autoRamClean: false, autoRamThreshold: 85, tempAlerts: true, cpuTempAlert: 95, gpuTempAlert: 90,
   overlayEnabled: true, overlayPosition: "top-left", overlayAutoInGame: true, overlayHotkey: "Ctrl+Shift+F10", fpsCounter: true,
+  miniMonitor: true, miniMonitorHideFullscreen: true, miniMonitorPos: null,
 };
+
+const topApps = [
+  { name: "Google Chrome", exe: "chrome.exe", pids: [1200, 1201, 1202], count: 14, mem: 1.42 * GB, cpu: 6.2, gpu: 3.1 },
+  { name: "Visual Studio Code", exe: "Code.exe", pids: [3010, 3011], count: 9, mem: 0.71 * GB, cpu: 1.4, gpu: 0.4 },
+  { name: "Discord", exe: "Discord.exe", pids: [5120], count: 6, mem: 0.46 * GB, cpu: 0.8, gpu: 1.2 },
+  { name: "Adobe Photoshop 2024", exe: "Photoshop.exe", pids: [6230], count: 1, mem: 0.39 * GB, cpu: 0.3, gpu: 0 },
+  { name: "Spotify", exe: "Spotify.exe", pids: [7011], count: 5, mem: 0.28 * GB, cpu: 0.6, gpu: 0 },
+  { name: "RAGE!", exe: "RAGE.exe", pids: [8800], count: 1, mem: 0.19 * GB, cpu: 0.9, gpu: 0.2, self: true },
+  { name: "Telegram Desktop", exe: "Telegram.exe", pids: [9040], count: 1, mem: 0.17 * GB, cpu: 0.1, gpu: 0 },
+  { name: "Explorador de Arquivos", exe: "explorer.exe", pids: [4400], count: 1, mem: 0.12 * GB, cpu: 0.2, gpu: 0.1 },
+];
 
 const careCats = [
   { id: "junk", title: "Arquivos inúteis", description: "Temporários, caches e lixo do sistema", icon: "delete_sweep", defaultOn: true, order: 10 },
@@ -127,7 +145,7 @@ function careItems(cat) {
 }
 
 const handlers = {
-  "app.info": () => ({ name: "RAGE!", version: "1.0.0", isAdmin: true, portable: true, dataDir: "C:\\RAGE!\\data", os: "Windows 11 Home Single Language 25H2", osBuild: "26200.7171", machine: "MEU-PC", user: "Voce", uptimeSec: 139359, webview: "142.0", sensors: { installed: false, version: null, admin: true, cpuTemp: false, ready: true } }),
+  "app.info": () => ({ name: "RAGE!", version: "1.1.0", isAdmin: true, portable: true, dataDir: "C:\\RAGE!\\data", os: "Windows 11 Home Single Language 25H2", osBuild: "26200.7171", machine: "MEU-PC", user: "Voce", uptimeSec: 139359, webview: "142.0", sensors: { installed: false, version: null, admin: true, cpuTemp: false, ready: true } }),
   "settings.get": () => settings,
   "settings.set": ({ values }) => (settings = { ...settings, ...values }),
   "app.setTheme": () => true,
@@ -167,6 +185,23 @@ const handlers = {
   "fps.status": () => ({ running: true, admin: true, current: null, apps: [] }),
   "overlay.toggle": ({ show }) => ({ visible: !!show }),
   "overlay.applySettings": () => true,
+  "overlay.captureHotkey": () => true,
+  "overlay.setHotkey": async ({ hotkey }) => {
+    await wait(120);
+    if (hotkey === "Ctrl+Alt+Delete") throw new Error(`O Windows recusou ${hotkey}: outro programa já usa esse atalho. Escolha outra combinação.`);
+    settings = { ...settings, overlayHotkey: hotkey };
+    return { hotkey };
+  },
+  "proc.top": async ({ by = "mem", limit = 8 }) => {
+    await wait(150);
+    return [...topApps].map((a) => ({ ...a, cpu: +Math.max(0, a.cpu + rnd(-0.4, 0.6)).toFixed(1), icon: null })).sort((a, b) => b[by] - a[by]).slice(0, limit);
+  },
+  "proc.kill": async () => { await wait(300); return { ok: true, killed: 1 }; },
+  "mini.state": () => ({ enabled: settings.miniMonitor, open: true, hideFullscreen: settings.miniMonitorHideFullscreen }),
+  "mini.close": () => true,
+  "mini.setEnabled": ({ on }) => (settings = { ...settings, miniMonitor: on }),
+  "mini.resetPosition": () => true,
+  "app.show": () => true,
   "power.plans": () => ({ plans: [{ guid: "381b4222-f694-41f0-9685-ff5bb260df2e", name: "Equilibrado", active: true }, { guid: "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c", name: "Alto desempenho", active: false }, { guid: "rage-x", name: "RAGE! Turbo", active: false }], active: "381b4222-f694-41f0-9685-ff5bb260df2e", overlay: "00000000-0000-0000-0000-000000000000", overlayName: "Equilibrado", cpu: { minAc: 5, maxAc: 100, boostAc: 2, minDc: 5, maxDc: 100, boostDc: 1 } }),
   "power.setPlan": () => handlers["power.plans"](),
   "power.setOverlay": () => handlers["power.plans"](),

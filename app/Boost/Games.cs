@@ -46,6 +46,7 @@ namespace Rage.Boost
             @"\steamapps\common\", @"\Epic Games\", @"\XboxGames\", @"\GOG Galaxy\Games\", @"\GOG Games\", @"\Ubisoft Game Launcher\games\",
             @"\EA Games\", @"\Origin Games\", @"\Riot Games\", @"\Rockstar Games\", @"\Battle.net\", @"\Blizzard\",
             @"\Games\", @"\Jogos\", @"\Amazon Games\Library\", @"\itch\apps\",
+            @"\.minecraft\", @"\.tlauncher\", @"\Minecraft Launcher\runtime\", @"\Microsoft.4297127D64EC6_", // Minecraft Java roda pelo javaw.exe do launcher
         };
 
         static readonly Regex SkipExe = new Regex(@"(unins|uninst|setup|crash|report|redist|vc_?redist|dxsetup|dotnet|directx|launcher|updater|helper|easyanticheat|eac_|battleye|be_service|cefprocess|webhelper|ue4prereq|prereq|install|config|benchmark|server)", RegexOptions.IgnoreCase);
@@ -436,7 +437,7 @@ namespace Rage.Boost
                             if (!BoostService.Active) { BoostService.Start("game", fgPid, "auto: " + g.Name); autoPid = fgPid; }
                             else BoostService.AttachGame(fgPid);
                         }
-                        if (st.OverlayAutoInGame && st.OverlayEnabled) Rage.Monitor.Overlay.ShowAuto(true);
+                        Rage.Monitor.Overlay.ShowAuto(true); // o overlay decide pelas configurações, que podem mudar com o jogo já aberto
                         Bridge.Emit("game", new { started = true, name = g.Name, pid = fgPid });
                     }
                 }

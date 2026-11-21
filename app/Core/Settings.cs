@@ -43,6 +43,11 @@ namespace Rage.Core
         public bool OverlayAutoInGame { get; set; } = true;
         public string OverlayHotkey { get; set; } = "Ctrl+Shift+F10";
 
+        // Mini monitor (pílula flutuante com RAM e CPU)
+        public bool MiniMonitor { get; set; } = true;
+        public bool MiniMonitorHideFullscreen { get; set; } = true;
+        public string MiniMonitorPos { get; set; }              // "x,y" em pixels da tela; vazio = topo, ao centro
+
         public bool FpsCounter { get; set; } = true;
         public bool SensorsDriverPrompted { get; set; } = false;
         public bool FirstRunDone { get; set; } = false;

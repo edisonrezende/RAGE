@@ -14,7 +14,7 @@
     <RootNamespace>Rage</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>rage.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>RAGE!</Product>
     <AssemblyTitle>RAGE!</AssemblyTitle>
     <Description>RAGE! - monitor, limpeza, otimizacao e modo turbo para jogos</Description>

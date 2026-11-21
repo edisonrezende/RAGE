@@ -4,7 +4,10 @@ import { useApp } from "../App.jsx";
 import { call } from "../lib/rage.js";
 import { useAction } from "../lib/store.js";
 import * as f from "../lib/format.js";
-import { Button, Checkbox, Chip, Empty, Icon, Progress, cx } from "./ui.jsx";
+import { Button, Checkbox, Chip, Empty, Icon, cx } from "./ui.jsx";
+import { TickRing, zoneColor } from "./Charts.jsx";
+
+const WORK_COLOR = zoneColor(0, 1.01);
 
 export const CATEGORY_ROUTE = { junk: "/limpeza", privacy: "/limpeza?tab=privacy", registry: "/registro", shortcuts: "/registro?tab=shortcuts", startup: "/inicializacao", tweaks: "/ajustes", internet: "/internet", security: "/seguranca", disk: "/disco", updates: "/ferramentas/atualizacoes", antivirus: "/antivirus" };
 
@@ -165,9 +168,11 @@ export function ScanFlow({ categories, meta = [], autoScan = false, idle, emptyT
     const detail = cur?.phase === "item" ? cur.title : cur?.line;
     return (
       <div className="panel flex flex-col items-center px-6 py-12 text-center">
-        <span className="brand-bg flex size-16 items-center justify-center rounded-full text-white glow"><Icon name="auto_fix_high" size={32} /></span>
+        <TickRing value={p?.total ? (p.index + 0.5) / p.total : 0.04} size={132} n={44} tickLen={11} tickWidth={3} colorAt={WORK_COLOR}>
+          <Icon name="auto_fix_high" size={30} className="text-[var(--brand-bright)]" />
+          <span className="mt-1 text-[12px] font-semibold tabular text-[var(--text-secondary)]">{p?.total ? f.pct(((p.index + 0.5) / p.total) * 100) : "…"}</span>
+        </TickRing>
         <h3 className="heading mt-4 text-[18px] font-semibold">{p?.phase === "restore" ? "Criando ponto de restauração…" : p?.title ? `Corrigindo: ${p.title}` : "Corrigindo…"}</h3>
-        <Progress className="mt-5 max-w-md" value={p?.total ? ((p.index + 0.5) / p.total) * 100 : 0} indeterminate={!p?.total} />
         {detail && <p className="mt-3 max-w-xl truncate text-[12px] text-[var(--text-tertiary)]">{detail}</p>}
       </div>
     );
@@ -176,15 +181,15 @@ export function ScanFlow({ categories, meta = [], autoScan = false, idle, emptyT
   // ---------- Verificando ----------
   if (scanA.running) {
     const p = scanStage;
+    const scanPct = p?.total ? ((p.index + (p.phase === "scanned" ? 1 : 0.4)) / p.total) * 100 : 0;
     return (
       <div className="panel px-6 py-8">
         <div className="flex flex-col items-center text-center">
-          <span className="relative flex size-16 items-center justify-center">
-            <span className="absolute inset-0 animate-spin-slow rounded-full border-[3px] border-[var(--brand)] border-t-transparent" />
-            <Icon name="search" size={28} className="text-[var(--brand)]" />
-          </span>
+          <TickRing value={scanPct / 100 || 0.04} size={132} n={44} tickLen={11} tickWidth={3} colorAt={WORK_COLOR}>
+            <Icon name="search" size={28} className="text-[var(--brand-bright)]" />
+            <span className="mt-1 text-[12px] font-semibold tabular text-[var(--text-secondary)]">{f.pct(scanPct)}</span>
+          </TickRing>
           <h3 className="heading mt-4 text-[18px] font-semibold">Verificando{p?.title ? `: ${p.title}` : "…"}</h3>
-          <Progress className="mt-4 max-w-md" value={p?.total ? ((p.index + (p.phase === "scanned" ? 1 : 0.4)) / p.total) * 100 : 0} />
           {scanA.progress?.phase === "item" && scanA.progress.title && <p className="mt-2 max-w-xl truncate text-[12px] text-[var(--text-tertiary)]">{scanA.progress.title}</p>}
         </div>
         {meta.length > 1 && (

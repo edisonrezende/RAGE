@@ -21,6 +21,7 @@ namespace Rage
             });
             try { Monitor.Overlay.Init(); } catch (Exception ex) { Log.Error("Overlay", ex); }
             Settings.Changed += () => { try { Monitor.Overlay.ApplySettings(); } catch { } };
+            try { Monitor.MiniMonitor.Init(); } catch (Exception ex) { Log.Error("Mini monitor", ex); }
         }
 
         public static void StopAll()

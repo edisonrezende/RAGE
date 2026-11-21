@@ -98,66 +98,104 @@ namespace Rage.Core
     /// <summary>Ponte WebView2 <-> C#. Mensagens: {id, method, params} / {cancel:id}. Respostas: {id, ok, result|error} e eventos {event, data}.</summary>
     public static class Bridge
     {
-        static System.Windows.Forms.Control ui;
-        static CoreWebView2 core;
+        /// <summary>Uma página conectada: a janela principal ou o painel do mini monitor.</summary>
+        sealed class View
+        {
+            public System.Windows.Forms.Control Ui;
+            public CoreWebView2 Core;
+            public Func<bool> Visible;
+        }
+
+        static volatile View[] views = new View[0];
+        static readonly object Gate = new object();
         static readonly ConcurrentDictionary<string, CancellationTokenSource> Running = new ConcurrentDictionary<string, CancellationTokenSource>();
         public static volatile bool UiVisible = true;
 
-        public static void Attach(System.Windows.Forms.Control control, CoreWebView2 webview)
+        /// <summary>Há alguma página na tela para receber telemetria?</summary>
+        public static bool AnyVisible => views.Any(v => SafeVisible(v));
+        static bool SafeVisible(View v) { try { return v.Visible(); } catch { return false; } }
+
+        public static void Attach(System.Windows.Forms.Control control, CoreWebView2 webview, Func<bool> visible = null)
         {
-            ui = control;
-            core = webview;
-            core.WebMessageReceived += OnMessage;
+            var v = new View { Ui = control, Core = webview, Visible = visible ?? (() => UiVisible) };
+            lock (Gate) views = views.Concat(new[] { v }).ToArray();
+            webview.WebMessageReceived += (s, e) => OnMessage(v, e);
         }
 
-        static void OnMessage(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        public static void Detach(CoreWebView2 webview)
+        {
+            lock (Gate) views = views.Where(v => v.Core != webview).ToArray();
+        }
+
+        static void OnMessage(View from, CoreWebView2WebMessageReceivedEventArgs e)
         {
             JObject msg;
             try { msg = JObject.Parse(e.WebMessageAsJson); }
             catch { return; }
 
+            // Cada página numera as chamadas do seu jeito (r1, r2...): a chave junta a página para não colidir.
             var cancel = (string)msg["cancel"];
             if (cancel != null)
             {
-                if (Running.TryGetValue(cancel, out var c)) c.Cancel();
+                if (Running.TryGetValue(from.GetHashCode() + ":" + cancel, out var c)) c.Cancel();
                 return;
             }
             var id = (string)msg["id"];
             var method = (string)msg["method"];
             var p = msg["params"] as JObject;
+            var key = from.GetHashCode() + ":" + id;
             var cts = new CancellationTokenSource();
-            Running[id] = cts;
-            var ctx = new RpcContext { Id = id, Token = cts.Token, ProgressSink = d => Post(new { id, progress = d }) };
+            Running[key] = cts;
+            var ctx = new RpcContext { Id = id, Token = cts.Token, ProgressSink = d => Post(from, new { id, progress = d }) };
             Task.Run(async () =>
             {
                 try
                 {
                     var r = await Rpc.Invoke(method, p, ctx).ConfigureAwait(false);
-                    Post(new { id, ok = true, result = r });
+                    Post(from, new { id, ok = true, result = r });
                 }
                 catch (Exception ex)
                 {
                     ex = Rpc.Unwrap(ex);
                     var canceled = ex is OperationCanceledException;
                     if (!(ex is RpcException) && !canceled) Log.Error("RPC " + method, ex);
-                    Post(new { id, ok = false, canceled, error = canceled ? "Cancelado" : ex.Message });
+                    Post(from, new { id, ok = false, canceled, error = canceled ? "Cancelado" : ex.Message });
                 }
-                finally { Running.TryRemove(id, out _); cts.Dispose(); }
+                finally { Running.TryRemove(key, out _); cts.Dispose(); }
             });
         }
 
-        public static void Emit(string evt, object data) => Post(new { @event = evt, data });
+        /// <summary>Evento para todas as páginas.</summary>
+        public static void Emit(string evt, object data) => Broadcast(new { @event = evt, data }, false);
 
-        static void Post(object o)
+        /// <summary>Evento só para as páginas que estão na tela (telemetria a cada segundo).</summary>
+        public static void EmitVisible(string evt, object data) => Broadcast(new { @event = evt, data }, true);
+
+        static void Broadcast(object o, bool onlyVisible)
         {
-            var c = core; var u = ui;
-            if (c == null || u == null || u.IsDisposed) return;
+            var targets = views;
+            if (onlyVisible) targets = targets.Where(SafeVisible).ToArray();
+            if (targets.Length == 0) return;
+            string json;
+            try { json = Json.Serialize(o); }
+            catch (Exception ex) { Log.Error("Serializar evento", ex); return; }
+            foreach (var v in targets) PostJson(v, json);
+        }
+
+        static void Post(View v, object o)
+        {
             string json;
             try { json = Json.Serialize(o); }
             catch (Exception ex) { Log.Error("Serializar resposta", ex); return; }
+            PostJson(v, json);
+        }
+
+        static void PostJson(View v, string json)
+        {
+            var u = v.Ui; var c = v.Core;
             try
             {
-                if (!u.IsHandleCreated) return;
+                if (u == null || u.IsDisposed || !u.IsHandleCreated) return;
                 u.BeginInvoke((Action)(() => { try { c.PostWebMessageAsJson(json); } catch { } }));
             }
             catch { }

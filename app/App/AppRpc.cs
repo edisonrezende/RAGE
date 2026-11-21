@@ -126,6 +126,9 @@ namespace Rage.App
             return true;
         }
 
+        [Rpc("app.show")]
+        public static object Show() { MainForm.Instance?.ShowFromTray(); return true; }
+
         [Rpc("app.hide")]
         public static object Hide() { MainForm.Instance?.HideToTray(); return true; }
 
