@@ -1,6 +1,6 @@
 # RAGE!
 
-Monitor, limpeza, otimização e modo turbo para jogos no Windows 10 e 11. Portátil: uma pasta, sem instalador, sem conta e sem anúncios.
+Perfomance, cuidado e proteção para sua máquina.
 
 ![Tela de Overclock do RAGE!](docs/overclock.png)
 
