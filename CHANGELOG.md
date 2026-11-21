@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 1.1.1
+
+- Mini monitor: a barrinha deixou de ser uma pílula e virou um retângulo de cantos arredondados, acompanhando o formato do ícone do RAGE!.
+
 ## 1.1.0
 
 - Mini monitor: uma pílula sempre à vista com RAM e CPU, que pode ser arrastada para qualquer lugar da tela. Um clique abre o painel com anéis de RAM, CPU, GPU e disco, os apps que mais consomem (com opção de finalizar), limpeza de RAM e Modo Turbo. Some sozinho em tela cheia e pode ser desligado em Configurações, na bandeja ou pelo botão direito na própria pílula.

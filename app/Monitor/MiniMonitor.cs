@@ -177,7 +177,7 @@ namespace Rage.Monitor
         [DllImport("gdi32.dll")] static extern bool DeleteObject(IntPtr hObject);
         [StructLayout(LayoutKind.Sequential, Pack = 1)] struct BLENDFUNCTION { public byte BlendOp, BlendFlags, SourceConstantAlpha, AlphaFormat; }
 
-        const float W = 198, H = 32;
+        const float W = 198, H = 32, Corner = 10;
         static readonly Font LabelFont = new Font("Segoe UI Semibold", 10.5f, FontStyle.Regular, GraphicsUnit.Pixel);
         static readonly Font ValueFont = new Font("Segoe UI Semibold", 13.5f, FontStyle.Regular, GraphicsUnit.Pixel);
 
@@ -331,7 +331,8 @@ namespace Rage.Monitor
                     g.Clear(Color.Transparent);
                     g.ScaleTransform(scale, scale);
                     var turbo = Boost.BoostService.Active;
-                    using (var path = Brand.Round(new RectangleF(0.5f, 0.5f, W - 1, H - 1), H / 2))
+                    // Canto concêntrico com o ícone: raio do ícone (22% de 20 px) + a margem de 6 px em volta dele.
+                    using (var path = Brand.Round(new RectangleF(0.5f, 0.5f, W - 1, H - 1), Corner))
                     using (var bg = new SolidBrush(hover ? Color.FromArgb(246, 30, 30, 34) : Color.FromArgb(244, 17, 17, 20)))
                     using (var border = new Pen(turbo ? Color.FromArgb(220, 255, 106, 43) : Color.FromArgb(hover ? 84 : 52, 255, 255, 255), 1f))
                     {

@@ -145,7 +145,7 @@ function careItems(cat) {
 }
 
 const handlers = {
-  "app.info": () => ({ name: "RAGE!", version: "1.1.0", isAdmin: true, portable: true, dataDir: "C:\\RAGE!\\data", os: "Windows 11 Home Single Language 25H2", osBuild: "26200.7171", machine: "MEU-PC", user: "Voce", uptimeSec: 139359, webview: "142.0", sensors: { installed: false, version: null, admin: true, cpuTemp: false, ready: true } }),
+  "app.info": () => ({ name: "RAGE!", version: "1.1.1", isAdmin: true, portable: true, dataDir: "C:\\RAGE!\\data", os: "Windows 11 Home Single Language 25H2", osBuild: "26200.7171", machine: "MEU-PC", user: "Voce", uptimeSec: 139359, webview: "142.0", sensors: { installed: false, version: null, admin: true, cpuTemp: false, ready: true } }),
   "settings.get": () => settings,
   "settings.set": ({ values }) => (settings = { ...settings, ...values }),
   "app.setTheme": () => true,
