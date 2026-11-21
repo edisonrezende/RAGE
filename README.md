@@ -8,7 +8,7 @@ O RAGE! junta num app só o que normalmente pede quatro ou cinco programas: ver 
 
 ## Baixar e usar
 
-1. Baixe o `RAGE!-portatil.zip` na página de [Releases](../../releases/latest).
+1. Baixe o `RAGE-portatil.zip` na página de [Releases](../../releases/latest).
 2. Extraia a pasta `RAGE!` onde quiser (Área de Trabalho, pendrive, outro HD).
 3. Abra o `RAGE!.exe` e aceite o pedido de administrador.
 
